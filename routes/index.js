@@ -1,9 +1,7 @@
 import express from 'express';
 const router = express.Router();
-import { message, newChatter, chatterLeft } from '../controllers/index.js';
+import { getDicesResults } from '../controllers/index.js';
 
-router.post('/', message);
-router.post('/newChatter', newChatter);
-router.post('/chatterLeft', chatterLeft);
+router.post('/getDicesResults', getDicesResults);
 
 export default router;

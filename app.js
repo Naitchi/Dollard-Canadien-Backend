@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import http from 'http';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -17,6 +18,8 @@ dotenv.config();
 
 // Nécessaire pour le router
 app.use(express.json());
+
+app.use(cors());
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {

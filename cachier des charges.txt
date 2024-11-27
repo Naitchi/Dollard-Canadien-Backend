@@ -1,0 +1,16 @@
+Dérouler d'une partie => 
+
+    Création d'un lobby ✅
+            Ajustement des règles 
+            Lancement de la partie
+            Limite au joueurs qui sont déjà la 
+    tour du premier joueur. 
+    Les autres joue pas 
+    il clique 
+            Il lance
+            Animation
+        affichage des dés pour tout le monde
+    Sélection d'un dés au moins
+        affichage du choix 
+    Loop jusqu'a ce qu'il y ai plus de dé 
+    

@@ -12,29 +12,23 @@
 
   <body>
     <header>
-      <h1 class="title"><a href="/">Butterfly Chat</a></h1>
+      <h1 class="title"><a href="/">Dollar Canadien</a></h1>
       <button id="copy">→ Copier le lien <span class="responsive"> d'invitation</span> ←</button>
     </header>
-    <p id="box_loading">Chargement du salon de discussion...</p>
+    <p id="box_loading">Chargement du salon de la partie...</p>
     <div id="box_username" class="hide">
       <label for="username" class="label_username">
-        Pour rentrer dans la discussion il vous faut un nom d'utilisateur:
+        Pour rentrer dans la partie il vous faut un nom d'utilisateur:
       </label>
       <input placeholder="Votre pseudo" type="text" name="unsername" id="username" />
       <button id="validation">Validé</button>
     </div>
-    <div id="box_chat" class="hide">
-      <ul id="messages"></ul>
-      <form id="form" action="">
-        <input id="input" autocomplete="off" />
-        <button id="send">Envoyer</button>
-      </form>
-    </div>
-
+    <button id="test">Test</button>
+    <div id="dicesBox"></div>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://js.pusher.com/8.0.1/pusher.min.js"></script>
     <script type="module">
-      import { messageBox, connexionMsg, checkUsername } from './scripts/functions.js';
+      import { showResult, checkUsername } from './scripts/functions.js';
 
       // Config Pusher
       Pusher.logToConsole = true;
@@ -43,8 +37,8 @@
         forceTLS: true,
       });
 
-      //const link = 'http://localhost:3000';
-      const link = 'https://butterfly-chat.vercel.app';
+      const link = 'http://localhost:3000';
+      //const link = 'https://butterfly-chat.vercel.app';
 
       // Récupérer les éléments du DOM
       const form = document.getElementById('form');
@@ -56,6 +50,9 @@
       const chatBox = document.getElementById('box_chat');
       const loadingBox = document.getElementById('box_loading');
       const copy = document.getElementById('copy');
+      const button = document.getElementById('test');
+      const dicesBox = document.getElementById('dicesBox');
+
       let username = '';
       username = localStorage.getItem('username');
 
@@ -65,7 +62,7 @@
       let channel = null;
 
       if (idRoom) {
-        channel = pusher.subscribe(`butterflychat-${idRoom}`);
+        channel = pusher.subscribe(`DollarCanadien-${idRoom}`);
         console.log('Salon trouvé');
       } else alert('Aucun id trouvé dans l"url');
 
@@ -81,9 +78,9 @@
         }
       });
 
-      // Handle received messages
-      channel.bind('message', (data) => {
-        messageBox(data, username, messages);
+      // Handle received dices
+      channel.bind('dicesResults', (data) => {
+        showResult(data.dices, dicesBox);
       });
 
       // Handle new chatters
@@ -109,6 +106,22 @@
           }),
           keepalive: true, // important
         });
+      });
+
+      button.addEventListener('click', () => {
+        console.log('in click');
+        const response = fetch(`${link}/api/getDicesResults`, {
+          method: 'post',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: username,
+            idRoom: idRoom,
+          }),
+          keepalive: true, // important
+        });
+        console.log(response);
       });
 
       copy.addEventListener('click', () => {

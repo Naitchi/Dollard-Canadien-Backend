@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Butterfly Chat</title>
+    <link rel="stylesheet" href="./styles/index.css" />
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400&display=swap');
+    </style>
+  </head>
+
+  <body>
+    <h1 class="title">Butterfly Chat</h1>
+    <p class="desc">
+      Butterfly Chat is an online multi-personnes real-time Chat where messages are never saved and
+      disappear when you leave the room or just refresh your page, short-lived just like a Butterfly
+      🦋.
+    </p>
+    <button id="newRoom">Create a room →</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+      const monBouton = document.getElementById('newRoom');
+      const randomId = 'id' + Math.random().toString(16).slice(2);
+
+      monBouton.addEventListener('click', function () {
+        window.location.href = `chatRoom.html?room=${randomId}`;
+      });
+    </script>
+  </body>
+</html>

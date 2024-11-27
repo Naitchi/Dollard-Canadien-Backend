@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat</title>
+    <link rel="stylesheet" href="./styles/chatRoom.css" />
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400&display=swap');
+    </style>
+  </head>
+
+  <body>
+    <header>
+      <h1 class="title"><a href="/">Butterfly Chat</a></h1>
+      <button id="copy">→ Copier le lien <span class="responsive"> d'invitation</span> ←</button>
+    </header>
+    <p id="box_loading">Chargement du salon de discussion...</p>
+    <div id="box_username" class="hide">
+      <label for="username" class="label_username">
+        Pour rentrer dans la discussion il vous faut un nom d'utilisateur:
+      </label>
+      <input placeholder="Votre pseudo" type="text" name="unsername" id="username" />
+      <button id="validation">Validé</button>
+    </div>
+    <div id="box_chat" class="hide">
+      <ul id="messages"></ul>
+      <form id="form" action="">
+        <input id="input" autocomplete="off" />
+        <button id="send">Envoyer</button>
+      </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://js.pusher.com/8.0.1/pusher.min.js"></script>
+    <script type="module">
+      import { messageBox, connexionMsg, checkUsername } from './scripts/functions.js';
+
+      // Config Pusher
+      Pusher.logToConsole = true;
+      const pusher = new Pusher('46c45f5e0f237306de38', {
+        cluster: 'eu',
+        forceTLS: true,
+      });
+
+      //const link = 'http://localhost:3000';
+      const link = 'https://butterfly-chat.vercel.app';
+
+      // Récupérer les éléments du DOM
+      const form = document.getElementById('form');
+      const input = document.getElementById('input');
+      const messages = document.getElementById('messages');
+      const usernameInput = document.getElementById('username');
+      const validation = document.getElementById('validation');
+      const usernameBox = document.getElementById('box_username');
+      const chatBox = document.getElementById('box_chat');
+      const loadingBox = document.getElementById('box_loading');
+      const copy = document.getElementById('copy');
+      let username = '';
+      username = localStorage.getItem('username');
+
+      // Extraction de l'ID de l'URL et connexion au Channel
+      const urlParams = new URLSearchParams(window.location.search);
+      const idRoom = urlParams.get('room');
+      let channel = null;
+
+      if (idRoom) {
+        channel = pusher.subscribe(`butterflychat-${idRoom}`);
+        console.log('Salon trouvé');
+      } else alert('Aucun id trouvé dans l"url');
+
+      pusher.connection.bind('connected', () => {
+        checkUsername(username, idRoom, usernameBox, chatBox, loadingBox, link);
+      });
+
+      validation.addEventListener('click', () => {
+        if (usernameInput.value.trim().length > 0) {
+          localStorage.setItem('username', usernameInput.value.trim());
+          username = usernameInput.value.trim();
+          checkUsername(username, idRoom, usernameBox, chatBox, loadingBox, link);
+        }
+      });
+
+      // Handle received messages
+      channel.bind('message', (data) => {
+        messageBox(data, username, messages);
+      });
+
+      // Handle new chatters
+      channel.bind('newChatter', (data) => {
+        connexionMsg(data, messages, true);
+      });
+
+      channel.bind('chatterLeft', (data) => {
+        connexionMsg(data, messages, false);
+      });
+
+      window.addEventListener('beforeunload', () => {
+        console.log('in beforeunload');
+        if (!username.trim()) return;
+        fetch(`${link}/api/chatterLeft`, {
+          method: 'post',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: username,
+            idRoom: idRoom,
+          }),
+          keepalive: true, // important
+        });
+      });
+
+      copy.addEventListener('click', () => {
+        navigator.clipboard.writeText(window.location.href);
+        copy.innerText = 'Lien copié !';
+        setInterval(() => {
+          copy.innerText = "→ Copier le lien d'invitation ←";
+        }, 700);
+      });
+
+      // Handle form submission
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        console.log('in submit');
+        if (!input.value.trim()) {
+          return;
+        }
+        try {
+          const payload = {
+            username: username,
+            msg: input.value,
+            idRoom: idRoom,
+          };
+          input.value = '';
+          console.log(payload);
+          await axios.post(`${link}/api/`, payload);
+          console.log('submit done');
+        } catch (error) {
+          console.error('Error sending message:', error);
+        }
+      });
+    </script>
+  </body>
+</html>

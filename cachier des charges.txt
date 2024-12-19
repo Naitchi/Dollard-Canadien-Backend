@@ -14,3 +14,19 @@ Dérouler d'une partie =>
         affichage du choix 
     Loop jusqu'a ce qu'il y ai plus de dé 
     
+    Faire un mode auto ? ou t'as pas besoin de cliqué pour le mode attaque ? 
+
+fonctionnement d'un tour:
+ - Récupérer la partie, √
+ - Récupérer le joueur actif, √
+ - Récupérer les valeurs des dés choisient via leurs adresses √
+ - Check si y'a encore des dés à roll ou non ? √
+  - Si oui on rolls les dés restant et on les stocks à la place des anciens √
+  - Si non on calCULe (ahaha cul) son score √
+    - Si il perds des hps on lui retire √
+    - Si il passe en mode attaque, On calcul le chiffre d'attaque √
+      - On lance 6 dés qu'on garde dans un tableau de tableau de dés et on fait ça jusqua plus avoir le chiffre d'attaque au final ça ressemble à un truc comme ça pour 33de score: [[5,6,3,5,4,5],[5,1,2,6,2]]
+      - On calule les dégats √
+    - Et ensuite on change la personne active et on lance ses dés √
+ - Ensuite on pushe la game en Event pour que tout le monde l'ai
+ - Message de succès ou d'erreur.

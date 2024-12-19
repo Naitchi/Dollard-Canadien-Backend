@@ -1,7 +1,9 @@
 import express from 'express';
-const router = express.Router();
-import { getDicesResults } from '../controllers/index.js';
+import { lockDices, startGame } from '../controllers/index.js';
 
-router.post('/getDicesResults', getDicesResults);
+const router = express.Router();
+
+router.post('/lockDices', lockDices);
+router.post('/startGame', startGame);
 
 export default router;

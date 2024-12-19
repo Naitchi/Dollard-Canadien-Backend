@@ -1,4 +1,12 @@
-import { dicesRoll } from '../fonctions/fonctions.js';
+import {
+  dicesRoll,
+  getActivePlayer,
+  getAttackResult,
+  getDamage,
+  getNextPlayerId,
+  getValuesByIndex,
+} from '../functions/functions.js';
+import Game from '../models/Game.js';
 import pusher from '../pusher.js';
 
 /** 
@@ -7,45 +15,77 @@ import pusher from '../pusher.js';
           - Vérouillage des dés 
 */
 
-export const playerTurn = async (req, res) => {
-  console.log('playerTurn');
+// Allow to iniziliaze and start a game in the database
+export const startGame = async (req, res) => {
+  console.log('in startGame service');
   try {
-    // on donne le joueur qui joue et donc on doit passé la liste et ça se déclanche quand le mec à fini son tour
-    const payload = req.body;
-    await pusher.trigger(`DollarCanadien-${payload.idRoom}`, 'playerTurn', payload);
-    res.status(201).send(payload);
+    const game = new Game({
+      players: req.body.players.map((name) => ({
+        username: name,
+      })),
+    });
+    const savedGame = await game.save();
+
+    await pusher.trigger(`DollarCanadien-${req.body.idRoom}`, 'GameStart', savedGame);
+
+    res.status(201).send('La partie a bien été créé.');
   } catch (error) {
-    console.error('Erreur dans le contrôleur playerTurn:', error);
+    console.error('Erreur dans le contrôleur startGame:', error);
     res.status(500).send("Une erreur s'est produite");
   }
 };
 
-export const getDicesResults = async (req, res) => {
-  console.log('in getDicesResults');
+export const lockDices = async (req, res) => {
+  console.log('lockDices');
+
+  const lockedDicesIndexes = req.body.lockedDices;
+  console.log(lockedDicesIndexes);
+
+  const game = await Game.findOne({ _id: req.body.idGame });
+  console.log(game);
+
+  const activePlayer = getActivePlayer(game);
+  console.log(activePlayer);
+
+  const newLockedDices = getValuesByIndex(activePlayer.dicesRoll, lockedDicesIndexes);
+  console.log(newLockedDices);
+
+  activePlayer.lockedDices.push(newLockedDices);
+  console.log(activePlayer.lockedDices);
+
+  if (activePlayer.lockedDices.length === 6) {
+    console.log(activePlayer.dices);
+    activePlayer.dices = dicesRoll(6 - activePlayer.lockedDices.length);
+    console.log(activePlayer.dices);
+  } else {
+    const score = sumArray(activePlayer.dices);
+    if (score < 30) {
+      activePlayer.hp -= score;
+    } else {
+      const attack = score - 30;
+      console.log(attack);
+
+      const attackResult = getAttackResult(attack);
+      console.log(attackResult);
+      // TODO mettre ça dans une variable dans player
+
+      const damage = getDamage(attackResult, attack);
+      console.log(damage);
+      // TODO enlever ça des HP de la/les victime/s
+    }
+  }
+
+  game.actif = getNextPlayerId(game);
 
   try {
     const payload = {
-      username: req.body.username,
-      idRoom: req.body.idRoom,
-      dices: dicesRoll(6),
+      idGame: game.id,
+      game: game,
     };
-    await pusher.trigger(`DollarCanadien-${payload.idRoom}`, 'dicesResults', payload);
+    await pusher.trigger(`DollarCanadien-${payload.idGame}`, 'lockedDices', payload);
     res.status(200).send(payload);
   } catch (error) {
-    console.error('Erreur dans le contrôleur dicesResults:', error);
-    res.status(500).send("Une erreur s'est produite");
-  }
-};
-
-export const diceLockIn = async (req, res) => {
-  console.log('diceLockIn');
-  // Renvoie au gens le choix de la personne et son score si il ne lui reste pas de dé disponible et ses HPs
-  try {
-    const payload = req.body;
-    await pusher.trigger(`DollarCanadien-${payload.idRoom}`, 'diceLockIn', payload);
-    res.status(200).send(payload);
-  } catch (error) {
-    console.error('Erreur dans le contrôleur diceLockIn:', error);
+    console.error('Erreur dans le contrôleur lockedDices:', error);
     res.status(500).send("Une erreur s'est produite");
   }
 };

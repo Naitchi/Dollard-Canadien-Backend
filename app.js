@@ -3,6 +3,7 @@ import cors from 'cors';
 import http from 'http';
 import dotenv from 'dotenv';
 import path from 'path';
+import mongoose from 'mongoose';
 import { fileURLToPath } from 'url'; // Importer la fonction fileURLToPath depuis le module 'url'
 
 const __filename = fileURLToPath(import.meta.url); // Obtenir le chemin du fichier en cours d'exécution
@@ -16,6 +17,14 @@ import index from './routes/index.js';
 // Nécessaire pour les .env
 dotenv.config();
 
+mongoose
+  .connect(process.env.MONGOOSE_SECRET_TOKEN, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log('Connexion à MongoDB réussie !'))
+  .catch(() => console.log('Connexion à MongoDB échouée !'));
+
 // Nécessaire pour le router
 app.use(express.json());
 
@@ -28,7 +37,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/', index);
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 server.listen(PORT, () => {
   console.log(`Serveur en cours d'exécution sur le port ${PORT}`);

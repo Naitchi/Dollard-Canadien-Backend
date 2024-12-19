@@ -47,18 +47,21 @@ export const lockDices = async (req, res) => {
   const activePlayer = getActivePlayer(game);
   console.log(activePlayer);
 
-  const newLockedDices = getValuesByIndex(activePlayer.dicesRoll, lockedDicesIndexes);
+  console.log('activePlayer.dices:', activePlayer.dices);
+  console.log('lockedDicesIndexes:', lockedDicesIndexes);
+
+  const newLockedDices = getValuesByIndex(activePlayer.dices, lockedDicesIndexes);
   console.log(newLockedDices);
 
-  activePlayer.lockedDices.push(newLockedDices);
+  activePlayer.lockedDices.push(...newLockedDices);
   console.log(activePlayer.lockedDices);
 
-  if (activePlayer.lockedDices.length === 6) {
+  if (activePlayer.lockedDices.length !== 6) {
     console.log(activePlayer.dices);
-    activePlayer.dices = dicesRoll(6 - activePlayer.lockedDices.length);
+    activePlayer.dices = dicesRoll(6 - activePlayer.lockedDices.length); // TODO ça ça marche pas
     console.log(activePlayer.dices);
   } else {
-    const score = sumArray(activePlayer.dices);
+    const score = sumArray(activePlayer.lockedDices);
     if (score < 30) {
       activePlayer.hp -= score;
     } else {
@@ -78,9 +81,14 @@ export const lockDices = async (req, res) => {
   game.actif = getNextPlayerId(game);
 
   try {
+    const updatedGame = await Game.findByIdAndUpdate(
+      req.body.idGame,
+      { $set: game },
+      { new: true },
+    );
     const payload = {
       idGame: game.id,
-      game: game,
+      game: updatedGame,
     };
     await pusher.trigger(`DollarCanadien-${payload.idGame}`, 'lockedDices', payload);
     res.status(200).send(payload);

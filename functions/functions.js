@@ -15,6 +15,9 @@ export const getValuesByIndex = (arrayOfValues, arrayOfIndexes) => {
     throw new Error('Les deux arguments doivent être des tableaux');
   }
   return arrayOfIndexes.map((index) => {
+    console.log('index:', index);
+    console.log('arrayOfValues.length:', arrayOfValues.length);
+
     if (index < 0 || index >= arrayOfValues.length) {
       throw new Error(`Index hors des limites : ${index}`);
     }
@@ -66,7 +69,7 @@ export const getDamage = (attackResults, attackNumber) => {
 export const getNextPlayerId = (game) => {
   const activePlayerId = game.actif;
   const players = game.players;
-  const currentIndex = players.findIndex((player) => player._id.$oid === activePlayerId);
+  const currentIndex = players.findIndex((player) => player._id == activePlayerId);
   if (currentIndex === -1) {
     throw new Error('Joueur actif non trouvé dans la liste des joueurs');
   }

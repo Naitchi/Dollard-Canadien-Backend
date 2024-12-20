@@ -1,13 +1,23 @@
 export const dicesRoll = (diceNumber) => {
   const dicesResults = [];
   for (let i = 0; i < diceNumber; i++) {
-    dicesResults.push(Math.floor(Math.random() * (6 - 1) + 1));
+    dicesResults.push(Math.floor(Math.random() * 6) + 1);
   }
   return dicesResults;
 };
 export const getActivePlayer = (game) => {
   const activeId = game.actif;
-  return game.players.filter((player) => player.id === activeId)[0];
+  return game.players.filter((player) => player._id == activeId)[0];
+};
+
+export const deletePlayersIds = (game) => {
+  if (Array.isArray(game.players)) {
+    game.players = game.players.map((player) => {
+      delete player._id;
+      return player;
+    });
+  }
+  return game;
 };
 
 export const getValuesByIndex = (arrayOfValues, arrayOfIndexes) => {
@@ -21,7 +31,7 @@ export const getValuesByIndex = (arrayOfValues, arrayOfIndexes) => {
     if (index < 0 || index >= arrayOfValues.length) {
       throw new Error(`Index hors des limites : ${index}`);
     }
-    return arrayOfValues[arrayOfIndexes];
+    return arrayOfValues[index];
   });
 };
 

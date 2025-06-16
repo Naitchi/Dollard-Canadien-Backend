@@ -145,20 +145,25 @@ export const getDamage = (attackResults, attackNumber) => {
  * Gets the ID of the next player in the game.
  *
  * @param {Game} game - The game object containing players and the active player's ID.
- * @returns {string} The ID of the next player.
+ * @returns {string | null} The ID of the next player or null if no other player alive.
  */
 export const getNextPlayerId = (game) => {
   const activePlayerId = game.actif;
-  const players = game.players;
-  const currentIndex = players.findIndex((player) => player._id == activePlayerId);
+  const validPlayers = game.players.filter((player) => player.hp > 0);
+
+  const currentIndex = validPlayers.findIndex((player) => player._id == activePlayerId);
   if (currentIndex === -1) {
-    throw new Error('Joueur actif non trouvé dans la liste des joueurs');
+    console.error('Joueur actif non trouvé dans la liste des joueurs');
   }
-  const nextIndex = (currentIndex + 1) % players.length;
-  return players[nextIndex]._id;
+  const nextIndex = (currentIndex + 1) % validPlayers.length;
+
+  if (validPlayers[nextIndex]._id === activePlayerId) {
+    return null;
+  }
+
+  return validPlayers[nextIndex]._id;
 };
 
-// TODO check si ça marche bien et si les réferences marche et les données sont bonne
 /**
  * Distributes damage to valid targets in the game.
  *
@@ -169,22 +174,15 @@ export const getNextPlayerId = (game) => {
  * @returns {Player[]} The updated list of players with adjusted health points.
  */
 export const damageDistribution = (game, attackerId, number, damage) => {
-  let dmgToDeal = damage;
-
   const validTargets = game.players.filter((player) => player._id !== attackerId && player.hp > 0);
-
-  // TODO pas utile ça du coup non ? ou plutot faire une fin de game propre
   if (validTargets.length === 0) return game.players;
 
-  // TODO faire un throw ou un return propre
   let targetIndex = number % validTargets.length;
-
-  console.log(attackerId, number, damage);
-  console.log(validTargets);
+  let dmgToDeal = damage;
 
   while (dmgToDeal > 0) {
     let target = validTargets[targetIndex];
-    if (target.hp >= dmgToDeal) {
+    if (target.hp >= dmgToDeal || validTargets.length == 1) {
       game.players[target.index].hp -= dmgToDeal;
       dmgToDeal = 0;
     } else {

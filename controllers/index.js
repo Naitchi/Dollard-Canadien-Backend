@@ -21,6 +21,8 @@ import mongoose from 'mongoose';
  *         TODO voir pour les conditions de victoire aussi
  */
 
+// TODO faire un truc pour que les parties pas modifiees depuis un certain temps soient supprimées de la base de données
+
 // Crée un lobby dans la database
 export const createALobby = async (req, res) => {
   console.log('in createALobby service');
@@ -189,17 +191,24 @@ export const lockDices = async (req, res) => {
       activePlayer.hp -= 30 - score;
     } else {
       const attack = score - 30;
+
+      // create the attack results (array of arrays)
       const attackResult = getAttackResult(attack);
 
       activePlayer.attackDices = attackResult;
 
-      const damage = getDamage(attackResult, attack);
-
-      // TODO BUG avec la distribution quand ça acheve un mec/fini une game
-      damageDistribution(game, game.actif, attack, damage);
+      const totalDamage = getDamage(attackResult, attack);
+      // TODO mettre les bonnes step dans cette merde (a voir si on doit pas faire ca via d'autres controllers/ le front)
+      damageDistribution(game, game.actif, attack, totalDamage);
     }
     activePlayer.dices = [];
-    game.actif = getNextPlayerId(game);
+
+    const nextPlayerId = getNextPlayerId(game);
+    if (nextPlayerId) {
+      game.actif = nextPlayerId;
+    } else {
+      game.step = 'gameEnd';
+    }
     const nextActivePlayer = getActivePlayer(game);
     nextActivePlayer.attackDices = [];
     nextActivePlayer.dices = dicesRoll(6);
@@ -224,4 +233,14 @@ export const lockDices = async (req, res) => {
     console.error('Erreur dans le contrôleur lockedDices:', error);
     res.status(500).send("Une erreur s'est produite");
   }
+};
+
+export const test = async (req, res) => {
+  console.log('in test service');
+  const { id, user } = req.body;
+  console.log('id', id);
+  const game = await Game.findOne({ _id: new mongoose.Types.ObjectId(id) });
+  console.log('game', game);
+
+  res.status(200);
 };

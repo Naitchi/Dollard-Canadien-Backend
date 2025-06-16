@@ -12,6 +12,8 @@ const playerSchema = new mongoose.Schema({
   attackDices: { type: [[Number]], default: [] },
 });
 
+// TODO stocker le nombre de degats par source pour pouvoir les afficher genre "10degats de survie, 10degats par "lui",etc,..."
+
 const gameSchema = new mongoose.Schema({
   private: { type: String, default: false, required: true },
   host: {
@@ -19,7 +21,21 @@ const gameSchema = new mongoose.Schema({
     username: { type: String, default: null },
   },
   actif: { type: String, default: null },
-  step: { type: String, default: 'throw' },
+  step: {
+    type: String,
+    enum: [
+      'none',
+      'dicesAnimation',
+      'dices',
+      'lockAnimation',
+      'scoreAdditionAnimation',
+      'attack',
+      'damage',
+      'gameEnd',
+    ],
+    default: 'none',
+    required: true,
+  },
   players: { type: [playerSchema], default: [] },
 });
 

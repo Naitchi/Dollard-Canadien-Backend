@@ -6,6 +6,7 @@ import {
   lockDices,
   readyUp,
   startGame,
+  test,
 } from '../controllers/index.js';
 
 const router = express.Router();
@@ -16,5 +17,8 @@ router.post('/addAPlayer', addAPlayer);
 router.post('/readyUp', readyUp);
 router.post('/startGame', startGame);
 router.post('/lockDices', lockDices);
+
+// route pour tester des fonctionnalités :
+router.post('/test', test);
 
 export default router;

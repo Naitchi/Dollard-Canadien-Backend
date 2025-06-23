@@ -154,12 +154,9 @@ export const getNextPlayerId = (game) => {
   const currentIndex = validPlayers.findIndex((player) => player._id == activePlayerId);
   if (currentIndex === -1) {
     console.error('Joueur actif non trouvé dans la liste des joueurs');
-  }
-  const nextIndex = (currentIndex + 1) % validPlayers.length;
-
-  if (validPlayers[nextIndex]._id === activePlayerId) {
     return null;
   }
+  const nextIndex = (currentIndex + 1) % validPlayers.length;
 
   return validPlayers[nextIndex]._id;
 };

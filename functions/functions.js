@@ -149,20 +149,24 @@ export const getDamage = (attackResults, attackNumber) => {
  */
 export const getNextPlayerId = (game) => {
   const activePlayerId = game.actif;
-  const validPlayers = game.players.filter((player) => player.hp > 0);
-  if (validPlayers.length === 1) {
+  const playersAlive = game.players.filter((player) => player.hp > 0);
+  if (playersAlive.length === 1) {
     console.log("Plus qu'un joueur vivant");
     return null;
   }
 
-  const currentIndex = validPlayers.findIndex((player) => player._id == activePlayerId);
+  // Keep only players who are alive or the active player to get the starting point for the next player even if the active player is dead
+  const nextPlayer = game.players.filter(
+    (player) => player.hp > 0 || player._id === activePlayerId,
+  );
+  const currentIndex = nextPlayer.findIndex((player) => player._id == activePlayerId);
   if (currentIndex === -1) {
     console.error('Joueur actif non trouvé dans la liste des joueurs');
     return null;
   }
-  const nextIndex = (currentIndex + 1) % validPlayers.length;
+  const nextIndex = (currentIndex + 1) % nextPlayer.length;
 
-  return validPlayers[nextIndex]._id;
+  return nextPlayer[nextIndex]._id;
 };
 
 /**

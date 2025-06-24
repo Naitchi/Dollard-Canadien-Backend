@@ -183,6 +183,7 @@ export const lockDices = async (req, res) => {
 
   if (activePlayer.lockedDices.length !== 6) {
     activePlayer.dices = dicesRoll(6 - activePlayer.lockedDices.length);
+    game.step = 'none';
   } else {
     const score = sumArray(activePlayer.lockedDices);
     if (score < 30) {

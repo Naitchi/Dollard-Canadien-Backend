@@ -150,6 +150,10 @@ export const getDamage = (attackResults, attackNumber) => {
 export const getNextPlayerId = (game) => {
   const activePlayerId = game.actif;
   const validPlayers = game.players.filter((player) => player.hp > 0);
+  if (validPlayers.length === 1) {
+    console.log("Plus qu'un joueur vivant");
+    return null;
+  }
 
   const currentIndex = validPlayers.findIndex((player) => player._id == activePlayerId);
   if (currentIndex === -1) {

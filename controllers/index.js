@@ -18,7 +18,6 @@ import mongoose from 'mongoose';
  * Event=> - playerTurn (Donne la personne qui joue) (on pourra mettre si c'est un lancé pour la survie ou l'attaque)
  *         - Résulat des dés
  *         - Vérouillage des dés
- *         TODO voir pour les conditions de victoire aussi
  */
 
 // TODO faire un truc pour que les parties pas modifiees depuis un certain temps soient supprimées de la base de données
@@ -175,7 +174,6 @@ export const lockDices = async (req, res) => {
   const { id, user, lockedDices } = req.body;
 
   const game = await Game.findOne({ _id: new mongoose.Types.ObjectId(id) });
-
   const activePlayer = getActivePlayer(game);
 
   if (user.id !== activePlayer._id) return res.status(500).send('Pas ton tour mon grand >:(');
@@ -194,18 +192,55 @@ export const lockDices = async (req, res) => {
 
       // create the attack results (array of arrays)
       const attackResult = getAttackResult(attack);
-
       activePlayer.attackDices = attackResult;
-
       const totalDamage = getDamage(attackResult, attack);
-      // TODO mettre les bonnes step dans cette merde (a voir si on doit pas faire ca via d'autres controllers/ le front)
       damageDistribution(game, game.actif, attack, totalDamage);
     }
     activePlayer.dices = [];
 
+    game.step = 'scoreAdditionAnimation';
+  }
+
+  try {
+    const updatedGame = await Game.findByIdAndUpdate(
+      { _id: new mongoose.Types.ObjectId(id) },
+      { $set: game },
+      { new: true },
+    );
+    // TODO Y'a un probleme avec le actif actuelle, et le host ils ont tout les deux leurs ids quand on les renvoient free triche
+    // TODO Y'a un probleme avec le actif actuelle, et le host ils ont tout les deux leurs ids quand on les renvoient free triche
+    // TODO Y'a un probleme avec le actif actuelle, et le host ils ont tout les deux leurs ids quand on les renvoient free triche
+    // je veux dire que l'id du joueur actif et l'id du host sont disponible pour tout le monde donc on pourrait les utiliser pour tricher
+
+    // TODO faire deux pusher en fonction de si ça change de joueur actif ou non
+    await pusher.trigger(`DollarCanadien-${id}`, 'updateGame', updatedGame);
+
+    res.status(200).send(updatedGame);
+  } catch (error) {
+    console.error('Erreur dans le contrôleur lockedDices:', error);
+    res.status(500).send("Une erreur s'est produite");
+  }
+};
+
+export const endTurn = async (req, res) => {
+  console.log('in endTurn service');
+  const { id, user } = req.body;
+
+  const game = await Game.findOne({ _id: new mongoose.Types.ObjectId(id) });
+  const activePlayer = getActivePlayer(game);
+
+  if (user.id !== activePlayer._id) return res.status(500).send('Pas ton tour mon grand >:(');
+
+  if (activePlayer.lockedDices.length !== 6) {
+    res.status(500).send("Le joueur actif n'a pas verrouillé 6 dés.");
+    return;
+  } else {
+    // TODO changer pour pas faire jouer le mec si il reste que lui (que le joueur actuel est mort et quil est le dernier) (normalelement c'est bon mais je laisse pour validation)
+    // TODO revoir on affiche pas le bon joueur quand c'est le joueur actif qui meurt
     const nextPlayerId = getNextPlayerId(game);
     if (nextPlayerId) {
       game.actif = nextPlayerId;
+      game.step = 'none';
     } else {
       game.step = 'gameEnd';
     }
@@ -224,10 +259,28 @@ export const lockDices = async (req, res) => {
     // TODO Y'a un probleme avec le actif actuelle, et le host ils ont tout les deux leurs ids quand on les renvoient free triche
     // TODO Y'a un probleme avec le actif actuelle, et le host ils ont tout les deux leurs ids quand on les renvoient free triche
     // TODO Y'a un probleme avec le actif actuelle, et le host ils ont tout les deux leurs ids quand on les renvoient free triche
+    // je veux dire que l'id du joueur actif et l'id du host sont disponible pour tout le monde donc on pourrait les utiliser pour tricher
 
     // TODO faire deux pusher en fonction de si ça change de joueur actif ou non
     await pusher.trigger(`DollarCanadien-${id}`, 'updateGame', updatedGame);
 
+    res.status(200).send(updatedGame);
+  } catch (error) {
+    console.error('Erreur dans le contrôleur lockedDices:', error);
+    res.status(500).send("Une erreur s'est produite");
+  }
+};
+
+// TODO atm ca fait juste sa fonction mais tres possible de hack ca (en gros mettre des securités)
+export const changeGameStep = async (req, res) => {
+  console.log('in changeGameStep service');
+  const { id, user, step } = req.body;
+
+  try {
+    const updatedGame = await Game.findByIdAndUpdate(id, { $set: { step } }, { new: true });
+
+    // TODO faire un troisieme pusher pour le step ?? (pour l'instant ca marche juste pas opti)
+    await pusher.trigger(`DollarCanadien-${id}`, 'updateGame', updatedGame);
     res.status(200).send(updatedGame);
   } catch (error) {
     console.error('Erreur dans le contrôleur lockedDices:', error);

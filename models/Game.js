@@ -14,6 +14,8 @@ const playerSchema = new mongoose.Schema({
 
 // TODO stocker le nombre de degats par source pour pouvoir les afficher genre "10degats de survie, 10degats par "lui",etc,..."
 
+// TODO faire un champ step par personne ? plutot que global ?
+
 const gameSchema = new mongoose.Schema({
   private: { type: String, default: false, required: true },
   host: {

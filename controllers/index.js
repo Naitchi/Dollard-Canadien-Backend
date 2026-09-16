@@ -32,7 +32,7 @@ export const createALobby = async (req, res) => {
       players: [
         {
           username: req.body.user.username,
-          id: req.body.user.id,
+          _id: req.body.user.id,
           ready: true,
         },
       ],
@@ -62,6 +62,39 @@ export const getALobby = async (req, res) => {
   }
 };
 
+// Change les options d'un lobby
+export const changeOptions = async (req, res) => {
+  console.log('in changeOptions service');
+  const { id, user, options } = req.body;
+
+  try {
+    const game = await Game.findOne({ _id: new mongoose.Types.ObjectId(id) });
+    if (!game) return res.status(404).send('Aucun Lobby trouvé.');
+    if (game.actif) return res.status(409).send('La partie est déjà lancé.');
+    if (game.host.id !== user.id)
+      return res.status(403).send("Vous n'avez pas l'autorité pour faire ça.");
+
+    game.private = options.private;
+    game.maxPlayers = options.maxPlayers;
+    game.maxHp = options.maxHp;
+    // TODO ajouter les autres options ici
+
+    const updatedGame = await Game.findOneAndUpdate(
+      { _id: new mongoose.Types.ObjectId(id) },
+      { $set: game },
+      { new: true },
+    );
+
+    // TODO Y'a un probleme avec le actif actuelle, et le host ils ont tout les deux leurs ids quand on les renvoient
+    await pusher.trigger(`DollarCanadien-${id}`, 'updateGame', deletePlayersIds(updatedGame));
+
+    return res.status(201).send('Les options ont bien été modifié.');
+  } catch (error) {
+    console.error('Erreur dans le contrôleur startGame:', error);
+    res.status(500).send("Une erreur s'est produite");
+  }
+};
+
 // Service qui récupère le user (username et id) et l'ajoute dans la liste des joueurs de la partie
 export const addAPlayer = async (req, res) => {
   console.log('in addAPlayer service');
@@ -73,7 +106,7 @@ export const addAPlayer = async (req, res) => {
       return res.status(404).send('Aucun Lobby trouvé');
     }
 
-    game.players.push(user);
+    game.players.push({ _id: user.id, username: user.username, ready: false });
 
     const newGame = await Game.findOneAndUpdate(
       { _id: new mongoose.Types.ObjectId(id) },
@@ -85,6 +118,43 @@ export const addAPlayer = async (req, res) => {
     return res.status(201).send(newGame);
   } catch (error) {
     console.error('Erreur dans le contrôleur addAPlayer:', error);
+    res.status(500).send("Une erreur s'est produite");
+  }
+};
+
+// Service qui supprime un joueur de la liste des joueurs de la partie
+export const removeAPlayer = async (req, res) => {
+  console.log('in removeAPlayer service');
+  const { id, user, IndexToKick } = req.body;
+
+  try {
+    const game = await Game.findOne({ _id: new mongoose.Types.ObjectId(id) });
+    if (!game) return res.status(404).send('Aucun Lobby trouvé');
+    if (typeof IndexToKick !== 'number' || IndexToKick < 0 || IndexToKick >= game.players.length)
+      return res.status(400).send('Index de joueur invalide');
+    if (game.host.id !== user.id && user.id !== game.players[IndexToKick]?._id)
+      return res.status(403).send("Vous n'avez pas l'autorité pour faire ça.");
+
+    game.players.splice(IndexToKick, 1);
+
+    game.players.forEach((player, idx) => {
+      player.index = idx;
+    });
+
+    const updatedGame = await Game.findOneAndUpdate(
+      { _id: new mongoose.Types.ObjectId(id) },
+      { $set: { players: game.players } },
+      { new: true },
+    );
+
+    await pusher.trigger(
+      `DollarCanadien-${id}`,
+      'updatePlayers',
+      deletePlayersIds(updatedGame).players,
+    );
+    return res.status(200).send(updatedGame);
+  } catch (error) {
+    console.error('Erreur dans le contrôleur removeAPlayer:', error);
     res.status(500).send("Une erreur s'est produite");
   }
 };

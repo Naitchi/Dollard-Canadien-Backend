@@ -176,11 +176,11 @@ export const getNextPlayerId = (game) => {
  * @param {string} attackerId - The ID of the attacking player.
  * @param {number} number - A number used to determine the target index.
  * @param {number} damage - The total amount of damage to distribute.
- * @returns {Player[]} The updated list of players with adjusted health points.
+ * @returns {Game} The updated game object with players' health points adjusted.
  */
 export const damageDistribution = (game, attackerId, number, damage) => {
   const validTargets = game.players.filter((player) => player._id !== attackerId && player.hp > 0);
-  if (validTargets.length === 0) return game.players;
+  if (validTargets.length === 0) return game;
 
   let targetIndex = number % validTargets.length;
   let dmgToDeal = damage;

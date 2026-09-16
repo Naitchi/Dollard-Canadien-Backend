@@ -18,6 +18,8 @@ const playerSchema = new mongoose.Schema({
 
 const gameSchema = new mongoose.Schema({
   private: { type: String, default: false, required: true },
+  maxPlayers: { type: Number, default: 99, required: true },
+  maxHp: { type: Number, default: 30, required: true },
   host: {
     id: { type: String, default: null },
     username: { type: String, default: null },

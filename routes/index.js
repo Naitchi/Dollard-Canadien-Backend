@@ -2,11 +2,13 @@ import express from 'express';
 import {
   addAPlayer,
   changeGameStep,
+  changeOptions,
   createALobby,
   endTurn,
   getALobby,
   lockDices,
   readyUp,
+  removeAPlayer,
   startGame,
   test,
 } from '../controllers/index.js';
@@ -21,6 +23,8 @@ router.post('/startGame', startGame);
 router.post('/lockDices', lockDices);
 router.post('/endTurn', endTurn);
 router.post('/changeGameStep', changeGameStep);
+router.post('/changeOptions', changeOptions);
+router.post('/removeAPlayer', removeAPlayer);
 
 // route pour tester des fonctionnalités :
 router.post('/test', test);

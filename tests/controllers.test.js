@@ -519,7 +519,42 @@ describe('lockDices', () => {
     expect(body.step).toBe('scoreAdditionAnimation');
   });
 
-  it('resolves an attack when 6 dice are locked with a score of 30 or more', async () => {
+  it('is neutral (no HP change, no attack) when 6 dice are locked with a score of exactly 30', async () => {
+    const game = {
+      actif: 'p1',
+      step: 'dices',
+      players: [
+        {
+          _id: 'p1',
+          dices: [5],
+          lockedDices: [5, 5, 5, 5, 5], // 5 already locked, sum so far 25
+          hp: 30,
+          index: 0,
+          attackDices: [],
+        },
+        { _id: 'p2', dices: [], lockedDices: [], hp: 30, index: 1, attackDices: [] },
+      ],
+    };
+    Game.findOne.mockResolvedValueOnce(game);
+    Game.findByIdAndUpdate.mockImplementationOnce(echoSet());
+    const res = mockRes();
+
+    // lock the last dice [5] -> total locked = six 5s, sum = 30 exactly
+    await lockDices(
+      { body: { id: VALID_ID, user: { id: 'p1' }, lockedDices: [0] } },
+      res,
+    );
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const body = res.send.mock.calls[0][0];
+    expect(body.players[0].lockedDices).toEqual([5, 5, 5, 5, 5, 5]);
+    expect(body.players[0].hp).toBe(30);
+    expect(body.players[0].attackDices).toEqual([]);
+    expect(body.players[1].hp).toBe(30);
+    expect(body.step).toBe('scoreAdditionAnimation');
+  });
+
+  it('resolves an attack when 6 dice are locked with a score above 30', async () => {
     const game = {
       actif: 'p1',
       step: 'dices',

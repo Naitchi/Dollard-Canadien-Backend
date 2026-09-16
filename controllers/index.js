@@ -256,7 +256,9 @@ export const lockDices = async (req, res) => {
     game.step = 'none';
   } else {
     const score = sumArray(activePlayer.lockedDices);
-    if (score < 30) {
+    if (score <= 30) {
+      // A score of exactly 30 is neutral: no HP lost (30 - 30 = 0) and no
+      // attack triggered (an attack number of 0 can't match any die face).
       activePlayer.hp -= 30 - score;
     } else {
       const attack = score - 30;

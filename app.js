@@ -25,6 +25,11 @@ mongoose
   .then(() => console.log('Connexion à MongoDB réussie !'))
   .catch(() => console.log('Connexion à MongoDB échouée !'));
 
+// Nombre de proxys (hébergeur, load balancer...) devant le serveur, pour que
+// req.ip soit la vraie IP du client (utilisée par les limites de requêtes).
+// 0 en local ; 1 derrière la plupart des hébergeurs.
+app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS ?? 0));
+
 // Nécessaire pour le router
 app.use(express.json());
 
